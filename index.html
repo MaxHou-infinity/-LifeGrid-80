@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生计算器 - Life Calculator</title>
+    <meta name="description" content="可视化你的一生时间分配，帮助你更有意识地规划生活方式">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- 引入字体图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 导出PDF所需库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- 引入Google字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <div class="navbar-left">
+                <div class="site-title">人生计算器</div>
+                <div class="site-subtitle">可视化你的一生，重新思考时间的价值</div>
+            </div>
+            <nav class="navbar-right">
+                <a href="https://www.maxhou.cn/" target="_blank" class="nav-link">首页</a>
+                <a href="https://www.maxhou.cn/blog/" target="_blank" class="nav-link">博客</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="intro">
+            <h2>你的时间，你的选择</h2>
+            <p>人生计算器通过网格化展示人类80年寿命中的每一天，帮助你直观理解时间分配。添加你的日常活动，看看它们在整个人生中占据多少比例。</p>
+        </section>
+
+        <section class="grid-container">
+            <div class="controls">
+                <div class="zoom-controls">
+                    <button id="zoom-out" title="缩小"><i class="fas fa-search-minus"></i></button>
+                    <span id="zoom-level">100%</span>
+                    <button id="zoom-in" title="放大"><i class="fas fa-search-plus"></i></button>
+                </div>
+            </div>
+            
+            <div class="grid-wrapper">
+                <div class="grid-scroll">
+                    <canvas id="life-grid"></canvas>
+                </div>
+            </div>
+            
+            <div class="activity-legend">
+                <h3>活动图例</h3>
+                <div id="legend-items">
+                    <!-- 活动图例将通过JS动态生成 -->
+                    <div class="legend-empty">
+                        <span class="color-box empty"></span>
+                        <span class="activity-name">未分配时间</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="activity-panel">
+            <h2>管理你的活动</h2>
+            <button id="add-activity" class="btn-primary">
+                <i class="fas fa-plus"></i> 添加新活动
+            </button>
+            
+            <div class="activities-list">
+                <!-- 活动列表将通过JS动态生成 -->
+            </div>
+        </section>
+
+        <section class="export-section">
+            <h2>导出我的人生计算结果</h2>
+            <div class="export-options">
+                <div class="format-selection">
+                    <h3>格式选择</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="export-format" value="png" checked>
+                            PNG
+                        </label>
+                        <label>
+                            <input type="radio" name="export-format" value="jpg">
+                            JPG
+                        </label>
+                        <label>
+                            <input type="radio" name="export-format" value="pdf">
+                            PDF
+                        </label>
+                    </div>
+                </div>
+
+                <div class="range-selection">
+                    <h3>导出范围</h3>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="export-range" value="full" checked>
+                            完整人生
+                        </label>
+                        <label>
+                            <input type="radio" name="export-range" value="custom">
+                            自定义
+                        </label>
+                    </div>
+                    <div class="custom-range" style="display: none;">
+                        <label>
+                            从第 <input type="number" id="range-start" min="1" max="80" value="1"> 年
+                            到第 <input type="number" id="range-end" min="1" max="80" value="80"> 年
+                        </label>
+                    </div>
+                </div>
+
+                <div class="extra-options">
+                    <h3>附加选项</h3>
+                    <label>
+                        <input type="checkbox" id="include-legend" checked>
+                        包含活动说明及图例
+                    </label>
+                    <label>
+                        <input type="checkbox" id="include-quote" checked>
+                        包含激励语
+                    </label>
+                </div>
+
+                <button id="export-btn" class="btn-primary">
+                    <i class="fas fa-download"></i> 导出
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- 添加活动的模态框 -->
+    <div id="activity-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">添加新活动</h2>
+            <form id="activity-form">
+                <input type="hidden" id="activity-id">
+                
+                <div class="form-group">
+                    <label for="activity-name">活动名称:</label>
+                    <input type="text" id="activity-name" placeholder="如：阅读" maxlength="20" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="time-amount">时间（小时）</label>
+                    <input type="number" id="time-amount" name="time-amount" min="0.1" max="8736" step="0.1" required>
+                    <small class="form-text">请输入0.1-8736之间的小时数，支持一位小数</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>频率:</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="frequency" value="daily" checked>
+                            每天
+                        </label>
+                        <label>
+                            <input type="radio" name="frequency" value="weekly">
+                            每周
+                        </label>
+                        <label>
+                            <input type="radio" name="frequency" value="monthly">
+                            每月
+                        </label>
+                        <label>
+                            <input type="radio" name="frequency" value="yearly">
+                            每年
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="duration-years">持续年限:</label>
+                    <input type="number" id="duration-years" min="0" max="80" value="1" required>
+                    <span>年</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>颜色选择:</label>
+                    <div class="color-picker">
+                        <!-- 颜色选择器将通过JS动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="delete-activity" class="btn-danger" style="display: none;">
+                        <i class="fas fa-trash"></i> 删除此活动
+                    </button>
+                    <div class="right-actions">
+                        <button type="button" id="cancel-activity" class="btn-secondary">取消</button>
+                        <button type="submit" id="save-activity" class="btn-primary">确认添加</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-bar">
+            <div class="footer-main">
+                <span>© 2024 MaxHou</span>
+                <span class="footer-links">
+                    <a href="https://www.maxhou.cn/" target="_blank">首页</a> ·
+                    <a href="https://www.maxhou.cn/blog/" target="_blank">博客</a> ·
+                    <a href="mailto:max@maxhou.cn">联系</a>
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 先加载工具函数 -->
+    <script src="js/utils.js"></script>
+    <!-- 加载主要功能模块 -->
+    <script src="js/activities.js"></script>
+    <script src="js/grid.js"></script>
+    <script src="js/export.js"></script>
+    <!-- 最后加载主应用 -->
+    <script src="js/app.js"></script>
+</body>
+</html> 
