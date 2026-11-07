@@ -1,443 +1,134 @@
-/**
- * 导出功能模块
- */
-
-// DOM元素
-const exportBtn = document.getElementById('export-btn');
-const exportFormatRadios = document.querySelectorAll('input[name="export-format"]');
-const exportRangeRadios = document.querySelectorAll('input[name="export-range"]');
-const customRangeDiv = document.querySelector('.custom-range');
-const rangeStartInput = document.getElementById('range-start');
-const rangeEndInput = document.getElementById('range-end');
-const includeLegendCheckbox = document.getElementById('include-legend');
-const includeQuoteCheckbox = document.getElementById('include-quote');
-
-// 导出相关常量
-const QUOTES = [
-    "生命中最重要的不是你做了什么，而是你如何分配自己的时间。",
-    "时间从不等待任何人，请明智地投资你的每一分钟。",
-    "我们不只是消费时间，我们在决定如何度过生命。",
-    "时间是唯一无法赚回的资源，你现在的选择将决定你的一生。",
-    "让你的这一程足够精彩与有意义，我们拭目以待。",
-    "改变生活不需要很多时间，只需要做出决定的那一刻。",
-    "生命的价值在于你每天所做的选择，而不是你计划要做的事情。",
-    "每一天都是生命赐予的礼物，珍惜每一刻。"
-];
-
-/**
- * 初始化导出功能
- */
-function initExport() {
-    // 绑定事件
-    bindExportEvents();
-}
-
-/**
- * 绑定导出相关事件
- */
-function bindExportEvents() {
-    // 自定义范围选项显示/隐藏
-    exportRangeRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (radio.value === 'custom') {
-                customRangeDiv.style.display = 'block';
-            } else {
-                customRangeDiv.style.display = 'none';
-            }
+/* Share PNG reads only a confirmed snapshot. Quote rotation is separate from all report/draft keys. */
+(function (root, factory) {
+    const api=factory(root);
+    if(typeof module==='object'&&module.exports)module.exports=api;
+    if(root)root.LifeExport=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(root){
+    'use strict';
+    const SHARE_URL='https://maxhou.cn/static/life-calculator/index.html';
+    const QUOTE_KEY='lifeCalculator_png_quote_index';
+    const QUOTES=Object.freeze([
+        '想散步的时候，给自己留一个下午。',
+        '那本翻到一半的书，还可以接着读。',
+        '有空时，约那个很久没见的人吃顿饭。',
+        '周末可以没有闹钟。',
+        '把想做的小事，放进下次空闲里。',
+        '不赶路的傍晚，可以走慢一点。',
+        '花一点时间，学会做一道喜欢的菜。',
+        '想去的地方，可以先从附近开始。',
+        '记得给一场长谈留出时间。',
+        '让日历里有一格，只写自己的名字。',
+        '好天气的时候，出门看看。',
+        '等有空再做的事，先选一件。',
+        '给今天的自己，留一段不用解释的时间。',
+        '有些下午，适合安静地待着。',
+        '找个空闲，把喜欢的歌从头听完。',
+        '想学的那件事，可以慢慢来。',
+        '下次见面，留够好好说话的时间。',
+        '去做那件一直惦记的小事。',
+        '给喜欢的事，多留一会儿。',
+        '今天的空闲，想怎样度过都可以。'
+    ]);
+    let memoryIndex=null;
+    const model=()=>root.LifeModel||(typeof require==='function'?require('./utils.js'):null);
+    const years=hours=>String(Math.round(hours/model().HOURS_PER_YEAR*1000)/1000);
+    function content(snapshot,quoteIndex=0){
+        if(!snapshot||snapshot.kind!=='confirmed')throw Error('Only confirmed snapshots can be exported');
+        const M=model(),report=M.reportLines(snapshot),summary=report.summary,b=summary.budget;
+        if(!b||summary.blockers.length)throw Error('Confirmed report is not calculable');
+        const heading=snapshot.schemaVersion===2?'原版 V2 · '+M.formatYears(b.B)+'—'+M.formatYears(b.L)+'岁（原口径）':M.formatYears(b.S)+'—'+M.formatYears(b.L)+'岁 · '+M.formatYears(b.D)+'年阶段预算';
+        const balance=(summary.E>0?'超出阶段预算约 ':'尚未分配 ')+years(summary.E>0?summary.E:summary.U)+' 年';
+        const details=summary.items.map(i=>({id:i.id,color:i.color||M.COLORS[0],excluded:i.status==='excluded',text:(i.name||'未命名活动')+' · '+(i.status==='excluded'?'用户明确排除，不计入统计':'耗费约 '+years(i.hours)+' 年')}));
+        const warnings=[];
+        for(const w of summary.warnings){
+            if(w.code==='over-allocation')warnings.push('超出阶段预算约 '+years(summary.E)+' 年。');
+            else if(w.code==='over-horizon')summary.items.filter(i=>i.status==='over-horizon').forEach(i=>warnings.push((i.name||'未命名活动')+'保留 '+i.durationYears+' 年，超出当前阶段，待修正。'));
+            else if(w.code==='excluded')warnings.push('已明确排除 '+summary.items.filter(i=>i.status==='excluded').length+' 项；余额不含这些活动。');
+            else if(w.code==='damage-excluded')warnings.push('已明确排除无法解析的旧数据，统计范围不完整。');
+            else if(w.code==='duplicate-name')warnings.push('同名活动分别保留，未合并。');
+            else warnings.push(w.message);
+        }
+        if(snapshot.schemaVersion===2)warnings.push('沿用原版 V2 预算口径，当前年龄 '+M.formatYears(b.A)+' 岁。');
+        const scope='统计范围：'+summary.counted+' 项计入，'+summary.items.filter(i=>i.status==='excluded').length+' 项由用户确认排除。';
+        const note='图中颜色表示等效时间，不是实际日程。';
+        const quote=QUOTES[Number.isInteger(quoteIndex)&&quoteIndex>=0&&quoteIndex<20?quoteIndex:0];
+        return {heading,balance,quote,details,warnings,scope,note,summary,lines:[heading,balance,quote,...details.map(i=>i.text),...warnings,scope,note]};
+    }
+    function peekQuoteIndex(storage){
+        if(memoryIndex!==null)return memoryIndex;
+        try{const raw=storage&&storage.getItem(QUOTE_KEY);if(/^(?:[0-9]|1[0-9])$/.test(raw))return Number(raw);}catch(_error){}
+        return 0;
+    }
+    function advanceQuoteIndex(storage,index){
+        memoryIndex=(index+1)%20;
+        // Failed read/write/readback must never affect report, draft, raw-backup, or download success.
+        try{return storage?model().writeVerify(storage,QUOTE_KEY,String(memoryIndex)):{ok:false};}catch(_error){return {ok:false};}
+    }
+    function wrapText(ctx,text,width){
+        const lines=[];let line='';
+        for(const char of String(text)){if(line&&ctx.measureText(line+char).width>width){lines.push(line);line='';}line+=char;}
+        lines.push(line);return lines;
+    }
+    function qrMatrix(){
+        if(typeof root.qrcode!=='function')throw Error('Local QR library unavailable');
+        const qr=root.qrcode(0,'M');qr.addData(SHARE_URL,'Byte');qr.make();return qr;
+    }
+    function buildExportCanvas(snapshot,options={}){
+        const M=model(),G=root.LifeGrid,share=content(snapshot,options.quoteIndex),plan=M.gridPlan(snapshot.settings,snapshot.activities,snapshot.schemaVersion);
+        if(!plan.ok)throw Error('Confirmed map is not calculable');
+        const qr=qrMatrix(),moduleSize=6,quiet=4,qrSize=(qr.getModuleCount()+quiet*2)*moduleSize;
+        const canvas=root.document.createElement('canvas'),ctx=canvas.getContext('2d');
+        const width=1200,pad=60,gridTop=330,rowStride=14,weekStride=19,cellW=17,cellH=10;
+        ctx.font='22px system-ui,sans-serif';
+        const detailRows=share.details.map(item=>({...item,lines:wrapText(ctx,item.text,width-pad*2-30)}));
+        const warningRows=share.warnings.flatMap(text=>wrapText(ctx,text,width-pad*2));
+        const detailsTop=gridTop+plan.rowCount*rowStride+54;
+        const detailsHeight=detailRows.reduce((n,item)=>n+item.lines.length*34+14,0);
+        const footerTop=detailsTop+detailsHeight+warningRows.length*32+102;
+        canvas.width=width;canvas.height=footerTop+Math.max(qrSize+76,300);
+        ctx.fillStyle='#f5f7f9';ctx.fillRect(0,0,width,canvas.height);
+        ctx.strokeStyle='#e5e9ed';ctx.lineWidth=1;
+        for(let x=0;x<width;x+=64){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke();}
+        for(let y=0;y<canvas.height;y+=64){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();}
+        ctx.fillStyle='#16859a';ctx.font='bold 16px monospace';ctx.fillText('MaxHou / YOUR TIME MAP',pad,50);
+        ctx.fillStyle='#102033';ctx.font='bold 32px "Noto Serif SC",serif';ctx.fillText(share.heading,pad,107);
+        ctx.fillStyle=share.summary.E>0?'#b86728':'#16859a';ctx.font='bold 52px "Noto Serif SC",serif';ctx.fillText(share.balance,pad,181);
+        ctx.fillStyle='#20364b';ctx.font='26px "Noto Serif SC",serif';ctx.fillText(share.quote,pad,239);
+        ctx.font='18px system-ui,sans-serif';
+        (snapshot.schemaVersion===2?[[G.STATE_COLOR.past,'已过去'],[G.STATE_COLOR['future-excluded'],'尚未纳入规划'],[G.STATE_COLOR.unallocated,'尚未分配']]:[[G.STATE_COLOR.outside,'不纳入本次规划'],[G.STATE_COLOR.unallocated,'尚未分配']]).forEach(([color,label],i)=>{
+            ctx.fillStyle=color;ctx.fillRect(pad+i*290,278,16,16);ctx.fillStyle='#536376';ctx.fillText(label,pad+26+i*290,293);
         });
-    });
-    
-    // 范围输入验证
-    rangeStartInput.addEventListener('change', validateRangeInputs);
-    rangeEndInput.addEventListener('change', validateRangeInputs);
-    
-    // 导出按钮点击事件
-    exportBtn.addEventListener('click', handleExport);
-}
-
-/**
- * 验证范围输入
- */
-function validateRangeInputs() {
-    let start = parseInt(rangeStartInput.value);
-    let end = parseInt(rangeEndInput.value);
-    
-    // 验证范围
-    if (isNaN(start) || start < 1) {
-        start = 1;
-    } else if (start > MAX_AGE) {
-        start = MAX_AGE;
+        const colors=Object.fromEntries(snapshot.activities.map(a=>[a.id,a.color||M.COLORS[0]]));
+        plan.cells.forEach(cell=>cell.segments.forEach(seg=>{
+            ctx.fillStyle=seg.kind==='activity'?colors[seg.activityId]:G.STATE_COLOR[seg.kind];
+            ctx.fillRect(120+cell.week*weekStride+seg.startFraction*cellW,gridTop+cell.year*rowStride,(seg.endFraction-seg.startFraction)*cellW,cellH);
+        }));
+        ctx.fillStyle='#536376';ctx.font='13px monospace';
+        for(let age=0;age<plan.rowCount;age++)if(age%10===0||age===Math.floor(plan.budget.B))ctx.fillText(age+'岁',pad,gridTop+age*rowStride+10);
+        let y=detailsTop;ctx.font='22px system-ui,sans-serif';
+        const rowBounds=[];
+        for(const item of detailRows){
+            const top=y;ctx.fillStyle=item.excluded?'#536376':item.color;ctx.fillRect(pad,y-15,14,14);
+            ctx.fillStyle='#20364b';for(const line of item.lines){ctx.fillText(line,pad+30,y);y+=34;}
+            rowBounds.push({id:item.id,top,bottom:y,text:item.text});y+=14;
+        }
+        ctx.fillStyle='#96511f';for(const line of warningRows){ctx.fillText(line,pad,y);y+=32;}
+        ctx.fillStyle='#536376';ctx.font='18px system-ui,sans-serif';ctx.fillText(share.scope,pad,y+14);ctx.fillText(share.note,pad,y+48);
+        ctx.strokeStyle='#cbd3dc';ctx.beginPath();ctx.moveTo(pad,footerTop);ctx.lineTo(width-pad,footerTop);ctx.stroke();
+        ctx.fillStyle='#102033';ctx.font='bold 30px "Noto Serif SC",serif';ctx.fillText('MaxHou',pad,footerTop+192);
+        ctx.font='20px system-ui,sans-serif';ctx.fillText('扫码，安排自己的时间',pad,footerTop+230);
+        const qrX=width-pad-qrSize,qrY=footerTop+25;
+        ctx.fillStyle='#fff';ctx.fillRect(qrX,qrY,qrSize,qrSize);ctx.fillStyle='#102033';
+        for(let row=0;row<qr.getModuleCount();row++)for(let col=0;col<qr.getModuleCount();col++)if(qr.isDark(row,col))ctx.fillRect(qrX+(col+quiet)*moduleSize,qrY+(row+quiet)*moduleSize,moduleSize,moduleSize);
+        return {canvas,lines:share.lines,summary:share.summary,plan,quoteIndex:options.quoteIndex||0,quote:share.quote,rowBounds,
+            qr:{url:SHARE_URL,x:qrX,y:qrY,size:qrSize,moduleSize,quietModules:quiet},snapshotSignature:JSON.stringify(snapshot)};
     }
-    
-    if (isNaN(end) || end < 1) {
-        end = 1;
-    } else if (end > MAX_AGE) {
-        end = MAX_AGE;
-    }
-    
-    // 确保开始不大于结束
-    if (start > end) {
-        end = start;
-    }
-    
-    // 更新输入值
-    rangeStartInput.value = start;
-    rangeEndInput.value = end;
-}
-
-/**
- * 处理导出操作
- */
-function handleExport() {
-    // 获取导出格式
-    let format = 'png';
-    exportFormatRadios.forEach(radio => {
-        if (radio.checked) {
-            format = radio.value;
-        }
-    });
-    
-    // 获取导出范围
-    let exportRange = 'full';
-    exportRangeRadios.forEach(radio => {
-        if (radio.checked) {
-            exportRange = radio.value;
-        }
-    });
-    
-    // 获取自定义范围
-    let startYear = 1;
-    let endYear = MAX_AGE;
-    
-    if (exportRange === 'custom') {
-        validateRangeInputs();
-        startYear = parseInt(rangeStartInput.value);
-        endYear = parseInt(rangeEndInput.value);
-    }
-    
-    // 获取附加选项
-    const includeLegend = includeLegendCheckbox.checked;
-    const includeQuote = includeQuoteCheckbox.checked;
-    
-    // 执行导出
-    exportLifeGrid(format, startYear, endYear, includeLegend, includeQuote);
-}
-
-/**
- * 导出生命网格
- * @param {string} format - 导出格式（png/jpg/pdf）
- * @param {number} startYear - 开始年份
- * @param {number} endYear - 结束年份
- * @param {boolean} includeLegend - 是否包含图例
- * @param {boolean} includeQuote - 是否包含激励语
- */
-function exportLifeGrid(format, startYear, endYear, includeLegend, includeQuote) {
-    // 显示加载状态
-    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在生成...';
-    exportBtn.disabled = true;
-    
-    // 为确保导出的视觉效果一致，临时固定缩放级别为100%
-    const originalZoomLevel = zoomLevel;
-    zoomLevel = 100;
-    
-    // 延迟执行以确保UI状态更新
-    setTimeout(() => {
-        // 创建导出容器
-        const exportContainer = document.createElement('div');
-        exportContainer.className = 'export-container';
-        exportContainer.style.position = 'absolute';
-        exportContainer.style.left = '-9999px';
-        exportContainer.style.background = 'white';
-        exportContainer.style.padding = '40px';
-        exportContainer.style.boxSizing = 'border-box';
-        exportContainer.style.width = '1200px';
-        exportContainer.style.fontFamily = "'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif";
-        document.body.appendChild(exportContainer);
-        
-        // 添加标题
-        const title = document.createElement('h1');
-        title.textContent = '我的人生时间分配';
-        title.style.textAlign = 'center';
-        title.style.marginBottom = '15px';
-        title.style.color = '#212529';
-        title.style.fontWeight = '700';
-        title.style.fontSize = '2.5rem';
-        title.style.letterSpacing = '-0.5px';
-        exportContainer.appendChild(title);
-        
-        // 添加副标题（显示选择的年份范围）
-        const subtitle = document.createElement('p');
-        subtitle.textContent = `第${startYear}年至第${endYear}年`;
-        subtitle.style.textAlign = 'center';
-        subtitle.style.marginBottom = '30px';
-        subtitle.style.color = '#6c757d';
-        subtitle.style.fontSize = '1.1rem';
-        subtitle.style.fontWeight = '300';
-        exportContainer.appendChild(subtitle);
-        
-        // 复制网格
-        const gridClone = document.createElement('div');
-        gridClone.style.display = 'flex';
-        gridClone.style.marginBottom = '30px';
-        exportContainer.appendChild(gridClone);
-        
-        // 复制年份标签
-        const yearsClone = document.createElement('div');
-        yearsClone.style.width = '50px';
-        yearsClone.style.marginRight = '15px';
-        yearsClone.style.flexShrink = '0';
-        
-        // 为选定的年份范围创建标签
-        for (let i = startYear - 1; i < endYear; i++) {
-            const yearLabel = document.createElement('div');
-            yearLabel.style.height = `${CELL_SIZE + CELL_MARGIN}px`;
-            yearLabel.style.display = 'flex';
-            yearLabel.style.alignItems = 'center';
-            yearLabel.style.justifyContent = 'flex-end';
-            yearLabel.style.paddingRight = '8px';
-            yearLabel.style.fontSize = '12px';
-            yearLabel.style.color = '#6c757d';
-            yearLabel.style.fontWeight = '400';
-            yearLabel.textContent = `${i + 1}`;
-            yearsClone.appendChild(yearLabel);
-        }
-        
-        gridClone.appendChild(yearsClone);
-        
-        // 创建新画布
-        const canvasClone = document.createElement('canvas');
-        const cellSize = CELL_SIZE; // 导出时使用固定尺寸
-        const cellWithMargin = cellSize + CELL_MARGIN;
-        
-        // 计算画布尺寸
-        canvasClone.width = GRID_WIDTH * cellWithMargin;
-        canvasClone.height = (endYear - startYear + 1) * cellWithMargin;
-        
-        const ctxClone = canvasClone.getContext('2d');
-        
-        // 临时调整主画布大小以捕获完整网格
-        const originalWidth = canvas.width;
-        const originalHeight = canvas.height;
-        canvas.width = GRID_WIDTH * cellWithMargin;
-        canvas.height = GRID_HEIGHT * cellWithMargin;
-        
-        // 重新渲染完整网格
-        renderGrid();
-        
-        // 复制特定范围的网格内容
-        const imageData = ctx.getImageData(
-            0, 
-            (startYear - 1) * cellWithMargin, 
-            GRID_WIDTH * cellWithMargin, 
-            (endYear - startYear + 1) * cellWithMargin
-        );
-        
-        // 将图像数据应用到导出画布
-        ctxClone.putImageData(imageData, 0, 0);
-        
-        // 添加画布到导出容器
-        const canvasWrapper = document.createElement('div');
-        canvasWrapper.style.overflow = 'hidden';
-        canvasWrapper.style.border = '1px solid #e9ecef';
-        canvasWrapper.style.borderRadius = '6px';
-        canvasWrapper.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
-        canvasWrapper.appendChild(canvasClone);
-        gridClone.appendChild(canvasWrapper);
-        
-        // 添加图例
-        if (includeLegend) {
-            const legendClone = document.createElement('div');
-            legendClone.style.display = 'flex';
-            legendClone.style.flexWrap = 'wrap';
-            legendClone.style.justifyContent = 'center';
-            legendClone.style.padding = '20px';
-            legendClone.style.gap = '20px';
-            legendClone.style.borderTop = '1px solid #e9ecef';
-            legendClone.style.marginTop = '30px';
-            
-            // 按占用时间从多到少排序活动
-            const sortedActivities = [...activities].sort((a, b) => {
-                return calculateActivityTotalWeeks(b) - calculateActivityTotalWeeks(a);
-            });
-            
-            // 添加图例项
-            sortedActivities.forEach(activity => {
-                const legendItem = document.createElement('div');
-                legendItem.style.display = 'flex';
-                legendItem.style.alignItems = 'center';
-                legendItem.style.marginRight = '25px';
-                
-                const colorBox = document.createElement('span');
-                colorBox.style.width = '16px';
-                colorBox.style.height = '16px';
-                colorBox.style.backgroundColor = activity.color;
-                colorBox.style.marginRight = '10px';
-                colorBox.style.display = 'inline-block';
-                colorBox.style.borderRadius = '4px';
-                
-                const activityText = document.createElement('span');
-                const totalWeeks = calculateActivityTotalWeeks(activity);
-                activityText.textContent = `${activity.name} (${totalWeeks}周)`;
-                activityText.style.fontSize = '14px';
-                activityText.style.fontWeight = '400';
-                activityText.style.color = '#212529';
-                
-                legendItem.appendChild(colorBox);
-                legendItem.appendChild(activityText);
-                legendClone.appendChild(legendItem);
-            });
-            
-            // 添加未分配时间图例
-            const emptyLegend = document.createElement('div');
-            emptyLegend.style.display = 'flex';
-            emptyLegend.style.alignItems = 'center';
-            
-            const emptyBox = document.createElement('span');
-            emptyBox.style.width = '16px';
-            emptyBox.style.height = '16px';
-            emptyBox.style.backgroundColor = '#f8f9fa';
-            emptyBox.style.border = '1px solid #e9ecef';
-            emptyBox.style.marginRight = '10px';
-            emptyBox.style.display = 'inline-block';
-            emptyBox.style.borderRadius = '4px';
-            
-            const emptyText = document.createElement('span');
-            emptyText.textContent = '未分配时间';
-            emptyText.style.fontSize = '14px';
-            emptyText.style.fontWeight = '400';
-            emptyText.style.color = '#212529';
-            
-            emptyLegend.appendChild(emptyBox);
-            emptyLegend.appendChild(emptyText);
-            legendClone.appendChild(emptyLegend);
-            
-            exportContainer.appendChild(legendClone);
-        }
-        
-        // 添加激励语
-        if (includeQuote) {
-            const quoteDiv = document.createElement('div');
-            quoteDiv.style.textAlign = 'center';
-            quoteDiv.style.fontStyle = 'italic';
-            quoteDiv.style.margin = '30px 0';
-            quoteDiv.style.color = '#6c757d';
-            quoteDiv.style.fontSize = '1.1rem';
-            quoteDiv.style.fontWeight = '300';
-            quoteDiv.style.lineHeight = '1.8';
-            
-            // 随机选择一条激励语
-            const randomQuote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
-            quoteDiv.textContent = `"${randomQuote}"`;
-            
-            exportContainer.appendChild(quoteDiv);
-        }
-        
-        // 添加页脚
-        const footer = document.createElement('div');
-        footer.style.textAlign = 'center';
-        footer.style.fontSize = '14px';
-        footer.style.color = '#6c757d';
-        footer.style.marginTop = '30px';
-        footer.style.fontWeight = '300';
-        footer.textContent = 'Generated by MaxHou - Life Calculator';
-        
-        exportContainer.appendChild(footer);
-        
-        // 使用html2canvas将导出容器转换为图像
-        html2canvas(exportContainer, {
-            scale: 2, // 提高导出图像质量
-            logging: false,
-            useCORS: true,
-            backgroundColor: '#ffffff'
-        }).then(canvas => {
-            // 移除导出容器
-            document.body.removeChild(exportContainer);
-            
-            // 根据格式进行不同的处理
-            if (format === 'pdf') {
-                // PDF导出
-                const { jsPDF } = window.jspdf;
-                
-                // 计算PDF尺寸
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = imgWidth / imgHeight;
-                
-                // 确定PDF方向和尺寸
-                let orientation, pdfWidth, pdfHeight;
-                if (ratio > 1) {
-                    orientation = 'landscape';
-                    pdfWidth = 297; // A4 landscape width in mm
-                    pdfHeight = pdfWidth / ratio;
-                    if (pdfHeight > 210) { // If height exceeds A4 landscape height
-                        pdfHeight = 210;
-                        pdfWidth = pdfHeight * ratio;
-                    }
-                } else {
-                    orientation = 'portrait';
-                    pdfHeight = 297; // A4 portrait height in mm
-                    pdfWidth = pdfHeight * ratio;
-                    if (pdfWidth > 210) { // If width exceeds A4 portrait width
-                        pdfWidth = 210;
-                        pdfHeight = pdfWidth / ratio;
-                    }
-                }
-                
-                const pdf = new jsPDF(orientation, 'mm', [pdfWidth, pdfHeight]);
-                
-                // 添加图像到PDF
-                pdf.addImage(
-                    canvas.toDataURL('image/png'), 
-                    'PNG', 
-                    0, 
-                    0, 
-                    pdfWidth, 
-                    pdfHeight
-                );
-                
-                // 保存PDF
-                pdf.save(`life_calculator_${new Date().toISOString().slice(0, 10)}.pdf`);
-            } else {
-                // PNG或JPG导出
-                const imageType = format === 'jpg' ? 'image/jpeg' : 'image/png';
-                const dataUrl = canvas.toDataURL(imageType, 0.95); // 提高图像质量
-                
-                // 创建下载链接
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = `life_calculator_${new Date().toISOString().slice(0, 10)}.${format}`;
-                link.click();
-            }
-            
-            // 恢复原始画布大小
-            canvas.width = originalWidth;
-            canvas.height = originalHeight;
-            zoomLevel = originalZoomLevel;
-            
-            // 恢复按钮状态
-            exportBtn.innerHTML = '<i class="fas fa-download"></i> 导出';
-            exportBtn.disabled = false;
-            
-            // 重新渲染原始网格
-            renderGrid();
-        }).catch(error => {
-            console.error('导出失败:', error);
-            alert('导出失败，请稍后再试。');
-            
-            // 恢复原始画布大小
-            canvas.width = originalWidth;
-            canvas.height = originalHeight;
-            zoomLevel = originalZoomLevel;
-            
-            // 恢复按钮状态
-            exportBtn.innerHTML = '<i class="fas fa-download"></i> 导出';
-            exportBtn.disabled = false;
-            
-            // 重新渲染原始网格
-            renderGrid();
-        });
-    }, 100);
-}
-
-// 导出函数
-window.initExport = initExport; 
+    const api={content,buildExportCanvas,peekQuoteIndex,advanceQuoteIndex,QUOTES,QUOTE_KEY,SHARE_URL,lastExport:null};
+    api.download=function(snapshot){
+        let storage;try{storage=root.localStorage;}catch(_error){}
+        const quoteIndex=peekQuoteIndex(storage),built=buildExportCanvas(snapshot,{quoteIndex});
+        const link=root.document.createElement('a');link.href=built.canvas.toDataURL('image/png');link.download='life-calculator-confirmed.png';link.click();
+        api.lastExport={quoteIndex,quote:built.quote,snapshotSignature:built.snapshotSignature};advanceQuoteIndex(storage,quoteIndex);return built;
+    };
+    return api;
+});

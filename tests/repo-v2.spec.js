@@ -1,0 +1,78 @@
+'use strict';
+const { test, expect } = require('@playwright/test');
+const fs = require('node:fs');
+const path = require('node:path');
+const M = require('../js/utils');
+const ART = process.env.LIFE_ARTIFACTS_DIR ? path.resolve(process.env.LIFE_ARTIFACTS_DIR) : path.resolve(__dirname, '../artifacts/local-v2/browser');
+const raw = page => page.evaluate(() => Object.fromEntries(['lifeCalculator_v3_draft', 'lifeCalculator_v3_confirmed', 'lifeCalculator_v3_rawBackup'].map(k => [k, localStorage.getItem(k)])));
+async function png(page, name) {
+    await page.evaluate(() => document.fonts.ready);
+    const event = page.waitForEvent('download');
+    await page.locator('#export-png').click();
+    const download = await event;
+    fs.mkdirSync(path.join(ART, 'png'), { recursive: true });
+    const file = path.join(ART, 'png', name + '.png');
+    await download.saveAs(file);
+    const bytes = fs.readFileSync(file);
+    expect(bytes.readUInt32BE(16)).toBe(1200);
+    const inspection = await page.evaluate(() => {
+        const snapshot = JSON.parse(localStorage.getItem('lifeCalculator_v3_confirmed'));
+        const built = LifeExport.buildExportCanvas(snapshot, { quoteIndex: LifeExport.lastExport.quoteIndex });
+        return { balance: LifeExport.content(snapshot).balance, lines: built.lines, quote: built.quote, snapshotSignature: built.snapshotSignature, encoded: built.canvas.toDataURL('image/png').split(',')[1] };
+    });
+    expect(bytes.equals(Buffer.from(inspection.encoded, 'base64'))).toBe(true);
+    delete inspection.encoded;
+    fs.writeFileSync(file.replace('.png', '-inspection.json'), JSON.stringify(inspection, null, 2));
+    return inspection;
+}
+
+test('独立仓库完整三步：7h睡眠+2h阅读，54/33.75→50/31.25，生成边界与两次真实PNG', async ({ page }) => {
+    const errors = [], failedAssets = [];
+    page.on('pageerror', e => errors.push(String(e)));
+    page.on('response', response => {
+        if (new URL(response.url()).origin === 'http://127.0.0.1:4173' && response.status() >= 400) failedAssets.push(response.url());
+    });
+    await page.goto('/index.html');
+    await expect(page).toHaveTitle('人生计算器 / Life Calculator · v2.0');
+    await page.locator('#open-planner').click();
+    await page.locator('#setting-S').fill('26'); await page.locator('#setting-L').fill('80');
+    await page.locator('#wizard-next').click();
+    await expect(page.locator('#daily-rows input[data-field=timeAmount]')).toHaveCount(16);
+    await page.locator('[data-row=sleep] input[data-field=timeAmount]').fill('7');
+    await page.locator('#wizard-next').click();
+    await expect(page.locator('#daily-value')).toHaveText('459');
+    await page.locator('#explore-rows input[data-field=name]').fill('阅读');
+    await page.locator('#explore-rows input[data-field=timeAmount]').fill('2');
+    await page.locator('#explore-rows select').selectOption('daily');
+    await expect(page.locator('#explore-value')).toHaveText('33.75');
+    expect((await raw(page))[M.KEY_CONFIRMED]).toBeNull();
+    await page.locator('#wizard-commit').click();
+    const before = await raw(page), first = JSON.parse(before[M.KEY_CONFIRMED]);
+    expect(first.activities.map(a => [a.durationYears, a.durationMode])).toEqual([[54, 'stage'], [54, 'stage']]);
+    const one = await png(page, 'repo-v2-54-quote-one');
+    const two = await png(page, 'repo-v2-54-quote-two');
+    expect(one.balance).toBe('尚未分配 33.75 年');
+    expect(two.quote).not.toBe(one.quote); expect(two.snapshotSignature).toBe(one.snapshotSignature);
+    expect(await raw(page)).toEqual(before);
+    fs.mkdirSync(path.join(ART, 'screenshots'), { recursive: true });
+    await page.screenshot({ path: path.join(ART, 'screenshots/repo-v2-54-report.png'), fullPage: true });
+    await page.locator('#edit-report').click();
+    await page.locator('#wizard-back').click(); await page.locator('#wizard-back').click();
+    await page.locator('#setting-S').fill('30');
+    await page.locator('#wizard-next').click(); await page.locator('#wizard-next').click();
+    await expect(page.locator('#explore-value')).toHaveText('31.25');
+    await page.locator('#wizard-close').click();
+    const pending = await raw(page), draft = JSON.parse(pending[M.KEY_DRAFT]);
+    expect(draft.activities.map(a => [a.durationYears, a.durationMode])).toEqual([[50, 'stage'], [50, 'stage']]);
+    expect(pending[M.KEY_CONFIRMED]).toBe(before[M.KEY_CONFIRMED]); expect(pending[M.KEY_BACKUP]).toBe(before[M.KEY_BACKUP]);
+    const held = await png(page, 'repo-v2-54-unsubmitted');
+    expect(held.snapshotSignature).toBe(one.snapshotSignature); expect(held.balance).toBe(one.balance);
+    await page.reload(); await page.locator('#edit-report').click(); await page.locator('#wizard-commit').click();
+    const final = JSON.parse((await raw(page))[M.KEY_CONFIRMED]);
+    expect(final.activities.map(a => a.id)).toEqual(first.activities.map(a => a.id));
+    expect(final.activities.map(a => a.durationYears)).toEqual([50, 50]);
+    const after = await png(page, 'repo-v2-50-confirmed');
+    expect(after.balance).toBe('尚未分配 31.25 年'); expect(after.lines.join(' ')).not.toMatch(/小时|8736|728|×/);
+    await page.screenshot({ path: path.join(ART, 'screenshots/repo-v2-50-report.png'), fullPage: true });
+    expect(errors).toEqual([]); expect(failedAssets).toEqual([]);
+});
