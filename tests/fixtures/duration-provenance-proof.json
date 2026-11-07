@@ -1,0 +1,42 @@
+{
+  "finding": "Existing assets1 V3 default duration and explicit manual 54-year input can serialize identically.",
+  "scenario": "26/80 -> create sleep8 default54 -> edit duration54/save -> edit main hours8",
+  "defaultActivity": {
+    "id": "act_mw63ys12_d6gida",
+    "name": "睡眠",
+    "timeAmount": "8",
+    "frequency": "daily",
+    "durationYears": 54,
+    "group": "daily",
+    "color": "#20364b",
+    "templateKey": "sleep",
+    "rowKey": "sleep",
+    "excludedByUser": false
+  },
+  "explicitManualActivity": {
+    "id": "act_mw63ys12_d6gida",
+    "name": "睡眠",
+    "timeAmount": "8",
+    "frequency": "daily",
+    "durationYears": 54,
+    "group": "daily",
+    "color": "#20364b",
+    "templateKey": "sleep",
+    "rowKey": "sleep",
+    "excludedByUser": false
+  },
+  "entireActivityEqual": true,
+  "keys": [
+    "id",
+    "name",
+    "timeAmount",
+    "frequency",
+    "durationYears",
+    "group",
+    "color",
+    "templateKey",
+    "rowKey",
+    "excludedByUser"
+  ],
+  "noUserData": true
+}

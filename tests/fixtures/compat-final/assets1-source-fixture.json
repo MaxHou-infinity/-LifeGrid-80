@@ -1,0 +1,182 @@
+{
+  "source": "actual assets1 six-JS synthetic event replay",
+  "sourceManifest": {
+    "source_archive": "life-calculator-v3-85606235043bb2dc-assets1.tar.gz",
+    "archive_sha256": "a403437a0afaee6191b4bbfba42d3126bb60e94a06b305157fca7ebf650c5e42",
+    "purpose": "isolated VM reproduction from immutable actual assets1, no user data",
+    "files": [
+      {
+        "path": "static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/activities.js",
+        "bytes": 17653,
+        "sha256": "d8e476fffde78b178fbafca628cac4ed783c2bf9f302cd60db7fe21b05253151",
+        "kind": "immutable-asset",
+        "candidate_path": "static/life-calculator/js/activities.js",
+        "candidate_sha256": "d8e476fffde78b178fbafca628cac4ed783c2bf9f302cd60db7fe21b05253151",
+        "body_identical_to_candidate": true,
+        "url": "/static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/activities.js"
+      },
+      {
+        "path": "static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/app.js",
+        "bytes": 21340,
+        "sha256": "4289743098f59918ff095eeb1c6f21ec130ee46d5f549ac68810d6c3851109e8",
+        "kind": "immutable-asset",
+        "candidate_path": "static/life-calculator/js/app.js",
+        "candidate_sha256": "4289743098f59918ff095eeb1c6f21ec130ee46d5f549ac68810d6c3851109e8",
+        "body_identical_to_candidate": true,
+        "url": "/static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/app.js"
+      },
+      {
+        "path": "static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/export.js",
+        "bytes": 4830,
+        "sha256": "7ae21b4b8601c9e1341bb8d12d37932f512314f99a742ab834fbda7d5613f049",
+        "kind": "immutable-asset",
+        "candidate_path": "static/life-calculator/js/export.js",
+        "candidate_sha256": "7ae21b4b8601c9e1341bb8d12d37932f512314f99a742ab834fbda7d5613f049",
+        "body_identical_to_candidate": true,
+        "url": "/static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/export.js"
+      },
+      {
+        "path": "static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/grid.js",
+        "bytes": 4681,
+        "sha256": "e993cdb19fe202acbbf7d91c26787fe3bb2993b74002e474727899e0892f27ae",
+        "kind": "immutable-asset",
+        "candidate_path": "static/life-calculator/js/grid.js",
+        "candidate_sha256": "e993cdb19fe202acbbf7d91c26787fe3bb2993b74002e474727899e0892f27ae",
+        "body_identical_to_candidate": true,
+        "url": "/static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/grid.js"
+      },
+      {
+        "path": "static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/legacy-model.js",
+        "bytes": 45877,
+        "sha256": "007e75e0b501282469e0f3a3daf5501137208a3cc517e104a8101c80812d58c7",
+        "kind": "immutable-asset",
+        "candidate_path": "static/life-calculator/js/legacy-model.js",
+        "candidate_sha256": "007e75e0b501282469e0f3a3daf5501137208a3cc517e104a8101c80812d58c7",
+        "body_identical_to_candidate": true,
+        "url": "/static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/legacy-model.js"
+      },
+      {
+        "path": "static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/utils.js",
+        "bytes": 48393,
+        "sha256": "3e1acba67b7cab34641625d9dca8d71266cce7e81d2575ad60d744df76d42d5e",
+        "kind": "immutable-asset",
+        "candidate_path": "static/life-calculator/js/utils.js",
+        "candidate_sha256": "3e1acba67b7cab34641625d9dca8d71266cce7e81d2575ad60d744df76d42d5e",
+        "body_identical_to_candidate": true,
+        "url": "/static/life-calculator/releases/v3-85606235043bb2dc-assets1/js/utils.js"
+      }
+    ]
+  },
+  "noUserData": true,
+  "storage": {
+    "lifeCalculator_activities": "[]",
+    "lifeCalculator_visited": "true",
+    "lifeCalculator_v3_rawBackup": "{\"schemaVersion\":1,\"kind\":\"raw-backup\",\"capturedAt\":\"2026-11-07T08:35:24.366Z\",\"note\":\"首次转换前的原始字符串和版本信息。此键一旦写成就不再覆盖。\",\"source\":\"life-calculator classic activities/zoom/currentAge/visited\",\"keys\":{\"lifeCalculator_activities\":\"[]\",\"lifeCalculator_zoomLevel\":null,\"lifeCalculator_currentAge\":null,\"lifeCalculator_visited\":\"true\",\"lifeCalculator_v2_rawBackup\":null,\"lifeCalculator_v2_draft\":null,\"lifeCalculator_v2_confirmed\":null,\"lifeCalculator_v2_zoom\":null}}",
+    "lifeCalculator_v3_draft": "{\"schemaVersion\":3,\"kind\":\"draft\",\"step\":3,\"settings\":{\"S\":\"26\",\"A\":null,\"L\":\"80\"},\"assumption\":{\"LIsDefault\":true,\"note\":\"旧版没有预计长度字段，网格固定画 80 年。这里预填 80 作为规划假设，请确认或修改；当前年龄和规划起点没有替你猜测。\"},\"activities\":[{\"id\":\"act_mw65eo27_8vkdcr\",\"name\":\"睡眠\",\"timeAmount\":\"7\",\"frequency\":\"daily\",\"durationYears\":54,\"group\":\"daily\",\"color\":\"#20364b\",\"templateKey\":\"sleep\",\"rowKey\":\"sleep\",\"excludedByUser\":false},{\"id\":\"act_mw65eo28_d9l7e4\",\"name\":\"旧手填阅读\",\"timeAmount\":4,\"frequency\":\"weekly\",\"durationYears\":10,\"group\":\"explore\",\"color\":\"#b86728\",\"templateKey\":null,\"rowKey\":\"empty-explore\",\"excludedByUser\":false}],\"damagedLegacyRaw\":null,\"damageAcknowledged\":false,\"updatedAt\":\"2026-11-07T08:35:24.369Z\",\"preservedV2Unsubmitted\":{},\"unsubmitted\":{},\"placeholders\":{\"daily\":[],\"explore\":[]},\"settingsTouched\":{\"S\":true,\"L\":true}}",
+    "lifeCalculator_v3_confirmed": "{\"schemaVersion\":3,\"basis\":\"selected-stage-v3\",\"kind\":\"confirmed\",\"committedAt\":\"2026-11-07T08:35:24.368Z\",\"settings\":{\"S\":\"26\",\"A\":null,\"L\":\"80\"},\"activities\":[{\"id\":\"act_mw65eo27_8vkdcr\",\"name\":\"睡眠\",\"timeAmount\":\"7\",\"frequency\":\"daily\",\"durationYears\":54,\"group\":\"daily\",\"color\":\"#20364b\",\"templateKey\":\"sleep\",\"rowKey\":\"sleep\",\"excludedByUser\":false},{\"id\":\"act_mw65eo28_d9l7e4\",\"name\":\"旧手填阅读\",\"timeAmount\":4,\"frequency\":\"weekly\",\"durationYears\":10,\"group\":\"explore\",\"color\":\"#b86728\",\"templateKey\":null,\"rowKey\":\"empty-explore\",\"excludedByUser\":false}],\"assumption\":{\"LIsDefault\":true,\"note\":\"旧版没有预计长度字段，网格固定画 80 年。这里预填 80 作为规划假设，请确认或修改；当前年龄和规划起点没有替你猜测。\"},\"damagedLegacyRaw\":null,\"damageAcknowledged\":false,\"scope\":{\"countedIds\":[\"act_mw65eo27_8vkdcr\",\"act_mw65eo28_d9l7e4\"],\"excludedIds\":[],\"damagedRawExcluded\":false}}"
+  },
+  "draft": {
+    "schemaVersion": 3,
+    "kind": "draft",
+    "step": 3,
+    "settings": {
+      "S": "26",
+      "A": null,
+      "L": "80"
+    },
+    "assumption": {
+      "LIsDefault": true,
+      "note": "旧版没有预计长度字段，网格固定画 80 年。这里预填 80 作为规划假设，请确认或修改；当前年龄和规划起点没有替你猜测。"
+    },
+    "activities": [
+      {
+        "id": "act_mw65eo27_8vkdcr",
+        "name": "睡眠",
+        "timeAmount": "7",
+        "frequency": "daily",
+        "durationYears": 54,
+        "group": "daily",
+        "color": "#20364b",
+        "templateKey": "sleep",
+        "rowKey": "sleep",
+        "excludedByUser": false
+      },
+      {
+        "id": "act_mw65eo28_d9l7e4",
+        "name": "旧手填阅读",
+        "timeAmount": 4,
+        "frequency": "weekly",
+        "durationYears": 10,
+        "group": "explore",
+        "color": "#b86728",
+        "templateKey": null,
+        "rowKey": "empty-explore",
+        "excludedByUser": false
+      }
+    ],
+    "damagedLegacyRaw": null,
+    "damageAcknowledged": false,
+    "updatedAt": "2026-11-07T08:35:24.369Z",
+    "preservedV2Unsubmitted": {},
+    "unsubmitted": {},
+    "placeholders": {
+      "daily": [],
+      "explore": []
+    },
+    "settingsTouched": {
+      "S": true,
+      "L": true
+    }
+  },
+  "confirmed": {
+    "schemaVersion": 3,
+    "basis": "selected-stage-v3",
+    "kind": "confirmed",
+    "committedAt": "2026-11-07T08:35:24.368Z",
+    "settings": {
+      "S": "26",
+      "A": null,
+      "L": "80"
+    },
+    "activities": [
+      {
+        "id": "act_mw65eo27_8vkdcr",
+        "name": "睡眠",
+        "timeAmount": "7",
+        "frequency": "daily",
+        "durationYears": 54,
+        "group": "daily",
+        "color": "#20364b",
+        "templateKey": "sleep",
+        "rowKey": "sleep",
+        "excludedByUser": false
+      },
+      {
+        "id": "act_mw65eo28_d9l7e4",
+        "name": "旧手填阅读",
+        "timeAmount": 4,
+        "frequency": "weekly",
+        "durationYears": 10,
+        "group": "explore",
+        "color": "#b86728",
+        "templateKey": null,
+        "rowKey": "empty-explore",
+        "excludedByUser": false
+      }
+    ],
+    "assumption": {
+      "LIsDefault": true,
+      "note": "旧版没有预计长度字段，网格固定画 80 年。这里预填 80 作为规划假设，请确认或修改；当前年龄和规划起点没有替你猜测。"
+    },
+    "damagedLegacyRaw": null,
+    "damageAcknowledged": false,
+    "scope": {
+      "countedIds": [
+        "act_mw65eo27_8vkdcr",
+        "act_mw65eo28_d9l7e4"
+      ],
+      "excludedIds": [],
+      "damagedRawExcluded": false
+    }
+  }
+}
